@@ -1,0 +1,3 @@
+[submodule "singelton"]
+	path = singelton
+	url = https://github.com/n1belung63/singelton.git

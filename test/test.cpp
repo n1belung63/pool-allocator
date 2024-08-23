@@ -1,16 +1,14 @@
 #include "../pool_allocator.h"
 #include "../pool_allocator_port_api.h"
-#include "../pool_allocator_port.h"
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
 using namespace allocator;
 
-class PoolAllocatorPortMock : public Singleton<PoolAllocatorPort>, public IPoolAllocatorPort {
-friend class Singleton<PoolAllocatorPortMock>;
+class PoolAllocatorPortMock : public Singleton<IPoolAllocatorPort>, public IPoolAllocatorPort {
+friend class Singleton<IPoolAllocatorPort>;
 public:
-    ~PoolAllocatorPortMock() override = default;
     MOCK_METHOD(void, AllocatorPortEnterCriticalSection, (), (override));
     MOCK_METHOD(void, AllocatorPortExitCriticalSection, (), (override));
 };

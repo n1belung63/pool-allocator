@@ -1,5 +1,6 @@
-#include "../pool_allocator.h"
-#include "../pool_allocator_port_api.h"
+#include <pool_allocator_port_api.h>
+#include <pool_allocator.h>
+#include <singelton.h>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>

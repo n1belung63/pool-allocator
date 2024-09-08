@@ -1,7 +1,7 @@
 #pragma once
 
 #include "pool_allocator_port_api.h"
-#include "singelton/singelton.h"
+#include "singelton.h"
 
 //#include "rtos_library.h"
 

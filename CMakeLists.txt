@@ -1,16 +1,16 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.27)
 
 project(PoolAllocator CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-add_subdirectory(test)
+enable_testing()
 
-set(POOLALLOCATOR_FILES 
-    pool_allocator_port_api.h
-    pool_allocator_port.h 
-    pool_allocator.h
-    singelton/singelton.h)
+add_library(${PROJECT_NAME} INTERFACE)
+target_include_directories(${PROJECT_NAME} INTERFACE .)
+
+add_subdirectory(singelton)
+add_subdirectory(test)
 
 include(CTest)

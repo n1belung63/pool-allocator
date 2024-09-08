@@ -1,6 +1,7 @@
 #pragma once
 
-#include "pool_allocator_port.h"
+#include "pool_allocator_port_api.h"
+#include "singelton.h"
 
 #include <cstring>
 #include <cstdint>

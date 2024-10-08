@@ -112,7 +112,7 @@ TEST(PoolAllocatorTest, AllBlocksAllocated) {
     }
     void* last_allocated_block = block;
 
-    EXPECT_DEATH(allocator.allocate(block_size), "No free blocks");
+    EXPECT_DEATH(allocator.allocate(block_size), "There no free blocks");
 
     EXPECT_CALL(mock_port, AllocatorPortEnterCriticalSection())
         .Times(1);
@@ -266,7 +266,7 @@ TEST(PoolAllocatorTest, AllocateBuffers) {
     fill_buffer(buf6, 60);
     check_buffer(buf6, 60);
 
-    EXPECT_DEATH(allocator.allocate(block_size), "No free blocks");
+    EXPECT_DEATH(allocator.allocate(block_size), "There no free blocks");
 
     EXPECT_CALL(mock_port, AllocatorPortEnterCriticalSection())
         .Times(1);

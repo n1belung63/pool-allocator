@@ -5,7 +5,7 @@
 namespace allocator {
 
 static constexpr uint32_t DEFAULT_ALIGNMENT = 4;
-	
+
 static constexpr uint32_t DefaultBlockSize = 512;
 static constexpr uint32_t DefaultBlockCount = 4;
 

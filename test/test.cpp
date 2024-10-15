@@ -14,54 +14,78 @@ public:
     MOCK_METHOD(void, AllocatorPortExitCriticalSection, (), (override));
 };
 
-TEST(PoolAllocatorTest, SimpleAllocation) {
+using ::testing::AtLeast;
+using ::testing::AnyNumber;
+
+class PoolAllocatorTest : public testing::Test {
+protected:
+    PoolAllocatorPortMock& mock_port_;
+
+    PoolAllocatorTest()
+        : mock_port_(Singleton<PoolAllocatorPortMock>::GetInstance()) { }
+
+    void SetUp() override {
+        EXPECT_CALL(mock_port_, AllocatorPortEnterCriticalSection())
+            .Times(AnyNumber());
+        EXPECT_CALL(mock_port_, AllocatorPortExitCriticalSection())
+            .Times(AnyNumber());
+
+        PoolAllocator<8,10,PoolAllocatorPortMock>& allocator = PoolAllocator<8,10,PoolAllocatorPortMock>::GetInstance();
+    }
+
+    void TearDown() override {
+        PoolAllocator<8,10,PoolAllocatorPortMock>& allocator = PoolAllocator<8,10,PoolAllocatorPortMock>::GetInstance();
+
+        EXPECT_CALL(mock_port_, AllocatorPortEnterCriticalSection())
+            .Times(1);
+        EXPECT_CALL(mock_port_, AllocatorPortExitCriticalSection())
+            .Times(1);
+
+        int free_blocks_count = allocator.GetFreeBlocksCount();
+
+        if (free_blocks_count != 10) {
+            EXPECT_CALL(mock_port_, AllocatorPortEnterCriticalSection())
+                .Times(10 - free_blocks_count);
+            EXPECT_CALL(mock_port_, AllocatorPortExitCriticalSection())
+                .Times(10 - free_blocks_count);
+            allocator.FreeAllBlocks();
+        }
+    }
+};
+
+TEST_F(PoolAllocatorTest, SimpleAllocation) {
     constexpr uint32_t block_size = 8;
     constexpr uint32_t block_count = 10;
-
-    PoolAllocatorPortMock& mock_port = Singleton<PoolAllocatorPortMock>::GetInstance();
-
-    EXPECT_CALL(mock_port, AllocatorPortEnterCriticalSection())
-        .Times(1);
-
-    EXPECT_CALL(mock_port, AllocatorPortExitCriticalSection())
-        .Times(1);
 
     PoolAllocator<block_size,block_count,PoolAllocatorPortMock>& allocator = 
         PoolAllocator<block_size,block_count,PoolAllocatorPortMock>::GetInstance();
 
-    EXPECT_CALL(mock_port, AllocatorPortEnterCriticalSection())
+    EXPECT_CALL(mock_port_, AllocatorPortEnterCriticalSection())
         .Times(1);
-    EXPECT_CALL(mock_port, AllocatorPortExitCriticalSection())
+    EXPECT_CALL(mock_port_, AllocatorPortExitCriticalSection())
         .Times(1);
 
     void* block = allocator.allocate(block_size);
     ASSERT_NE(block, nullptr);
 
-    EXPECT_CALL(mock_port, AllocatorPortEnterCriticalSection())
+    EXPECT_CALL(mock_port_, AllocatorPortEnterCriticalSection())
         .Times(1);
-    EXPECT_CALL(mock_port, AllocatorPortExitCriticalSection())
+    EXPECT_CALL(mock_port_, AllocatorPortExitCriticalSection())
         .Times(1);
 
     allocator.deallocate(block, block_size);
 }
 
-TEST(PoolAllocatorTest, CountFreeBlocksLeft) {
+TEST_F(PoolAllocatorTest, CountFreeBlocksLeft) {
     constexpr uint32_t block_size = 8;
     constexpr uint32_t block_count = 10;
-
-    PoolAllocatorPortMock& mock_port = Singleton<PoolAllocatorPortMock>::GetInstance();
-
-    EXPECT_CALL(mock_port, AllocatorPortEnterCriticalSection())
-        .Times(1);
-    EXPECT_CALL(mock_port, AllocatorPortExitCriticalSection())
-        .Times(1);
 
     PoolAllocator<block_size,block_count,PoolAllocatorPortMock>& allocator = 
         PoolAllocator<block_size,block_count,PoolAllocatorPortMock>::GetInstance();
 
-    EXPECT_CALL(mock_port, AllocatorPortEnterCriticalSection())
+    EXPECT_CALL(mock_port_, AllocatorPortEnterCriticalSection())
         .Times(1);
-    EXPECT_CALL(mock_port, AllocatorPortExitCriticalSection())
+    EXPECT_CALL(mock_port_, AllocatorPortExitCriticalSection())
         .Times(1);
 
     int free_blocks = allocator.GetFreeBlocksCount();
@@ -71,41 +95,34 @@ TEST(PoolAllocatorTest, CountFreeBlocksLeft) {
 
     void* block;
     for (int i = 0; i < block_count - free_blocks_true; ++i) {
-        EXPECT_CALL(mock_port, AllocatorPortEnterCriticalSection())
+        EXPECT_CALL(mock_port_, AllocatorPortEnterCriticalSection())
             .Times(1);
-        EXPECT_CALL(mock_port, AllocatorPortExitCriticalSection())
+        EXPECT_CALL(mock_port_, AllocatorPortExitCriticalSection())
             .Times(1);
         block = allocator.allocate(block_size);
         ASSERT_NE(block, nullptr);
     }
 
-    EXPECT_CALL(mock_port, AllocatorPortEnterCriticalSection())
+    EXPECT_CALL(mock_port_, AllocatorPortEnterCriticalSection())
         .Times(1);
-    EXPECT_CALL(mock_port, AllocatorPortExitCriticalSection())
+    EXPECT_CALL(mock_port_, AllocatorPortExitCriticalSection())
         .Times(1);
     free_blocks = allocator.GetFreeBlocksCount();
     ASSERT_EQ(free_blocks, free_blocks_true);
 }
 
-TEST(PoolAllocatorTest, AllBlocksAllocated) {
+TEST_F(PoolAllocatorTest, AllBlocksAllocated) {
     constexpr uint32_t block_size = 8;
     constexpr uint32_t block_count = 10;
-
-    PoolAllocatorPortMock& mock_port = Singleton<PoolAllocatorPortMock>::GetInstance();
-
-    EXPECT_CALL(mock_port, AllocatorPortEnterCriticalSection())
-        .Times(1);
-    EXPECT_CALL(mock_port, AllocatorPortExitCriticalSection())
-        .Times(1);
 
     PoolAllocator<block_size,block_count,PoolAllocatorPortMock>& allocator = 
         PoolAllocator<block_size,block_count,PoolAllocatorPortMock>::GetInstance();
 
     void* block;
     for (int i = 0; i < block_count; ++i) {
-        EXPECT_CALL(mock_port, AllocatorPortEnterCriticalSection())
+        EXPECT_CALL(mock_port_, AllocatorPortEnterCriticalSection())
             .Times(1);
-        EXPECT_CALL(mock_port, AllocatorPortExitCriticalSection())
+        EXPECT_CALL(mock_port_, AllocatorPortExitCriticalSection())
             .Times(1);
         block = allocator.allocate(block_size);
         ASSERT_NE(block, nullptr);
@@ -114,44 +131,37 @@ TEST(PoolAllocatorTest, AllBlocksAllocated) {
 
     EXPECT_DEATH(allocator.allocate(block_size), "There no free blocks");
 
-    EXPECT_CALL(mock_port, AllocatorPortEnterCriticalSection())
+    EXPECT_CALL(mock_port_, AllocatorPortEnterCriticalSection())
         .Times(1);
-    EXPECT_CALL(mock_port, AllocatorPortExitCriticalSection())
+    EXPECT_CALL(mock_port_, AllocatorPortExitCriticalSection())
         .Times(1);
     int free_blocks = allocator.GetFreeBlocksCount();
     ASSERT_EQ(free_blocks, 0);
 
-    EXPECT_CALL(mock_port, AllocatorPortEnterCriticalSection())
+    EXPECT_CALL(mock_port_, AllocatorPortEnterCriticalSection())
         .Times(1);
-    EXPECT_CALL(mock_port, AllocatorPortExitCriticalSection())
+    EXPECT_CALL(mock_port_, AllocatorPortExitCriticalSection())
         .Times(1);
     allocator.deallocate(last_allocated_block, block_size);
 
-    EXPECT_CALL(mock_port, AllocatorPortEnterCriticalSection())
+    EXPECT_CALL(mock_port_, AllocatorPortEnterCriticalSection())
         .Times(1);
-    EXPECT_CALL(mock_port, AllocatorPortExitCriticalSection())
+    EXPECT_CALL(mock_port_, AllocatorPortExitCriticalSection())
         .Times(1);
     free_blocks = allocator.GetFreeBlocksCount();
     ASSERT_EQ(free_blocks, 1);
 }
 
-TEST(PoolAllocatorTest, BadAddress) {
+TEST_F(PoolAllocatorTest, BadAddress) {
     constexpr uint32_t block_size = 8;
     constexpr uint32_t block_count = 10;
-
-    PoolAllocatorPortMock& mock_port = Singleton<PoolAllocatorPortMock>::GetInstance();
-
-    EXPECT_CALL(mock_port, AllocatorPortEnterCriticalSection())
-        .Times(1);
-    EXPECT_CALL(mock_port, AllocatorPortExitCriticalSection())
-        .Times(1);
 
     PoolAllocator<block_size,block_count,PoolAllocatorPortMock>& allocator = 
         PoolAllocator<block_size,block_count,PoolAllocatorPortMock>::GetInstance();
 
-    EXPECT_CALL(mock_port, AllocatorPortEnterCriticalSection())
+    EXPECT_CALL(mock_port_, AllocatorPortEnterCriticalSection())
         .Times(1);
-    EXPECT_CALL(mock_port, AllocatorPortExitCriticalSection())
+    EXPECT_CALL(mock_port_, AllocatorPortExitCriticalSection())
         .Times(1);
 
     void* block = allocator.allocate(block_size);
@@ -161,7 +171,7 @@ TEST(PoolAllocatorTest, BadAddress) {
     EXPECT_DEATH(allocator.deallocate((char*)allocator.GetPoolBaseAddress() + 1, block_size), "Not aligned");
 }
 
-TEST(PoolAllocatorTest, AllocateBuffers) {
+TEST(PoolAllocatorTestBuffers, AllocateBuffers) {
     constexpr uint32_t block_size = 512;
     constexpr uint32_t block_count = 4;
 

@@ -36,6 +36,7 @@ public:
     void deallocate(void *ptr, size_t size);
     void* GetPoolBaseAddress(void);
     int GetFreeBlocksCount(void);
+    void FreeAllBlocks(void);
 private:
     explicit PoolAllocator();
 
@@ -101,6 +102,26 @@ int PoolAllocator<blockSize,blockCount,TPoolAllocatorPort>::GetFreeBlocksCount(v
         counter++;
     }
     return counter;
+}
+
+template <uint32_t blockSize, uint32_t blockCount, typename TPoolAllocatorPort>
+void PoolAllocator<blockSize,blockCount,TPoolAllocatorPort>::FreeAllBlocks(void) {
+    Block* block;
+    bool is_free = false;
+    for (int i = 0; i < blockCount; ++i) {
+        block = first_free_block_;
+        while (block != nullptr) {
+            if (reinterpret_cast<char*>(block) == reinterpret_cast<char*>(&pool_[i])) {
+                is_free = true;
+                break;
+            }
+            block = block->next;
+        }
+        if (!is_free) {
+            deallocate(&pool_[i], blockSize);
+        }
+        is_free = false;
+    }
 }
 
 template <uint32_t blockSize, uint32_t blockCount, typename TPoolAllocatorPort>
